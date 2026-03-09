@@ -102,7 +102,7 @@ struct SessionHistoryView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                ForEach(turns, id: \.index) { turn in
+                                ForEach(turns, id: \.lineNumber) { turn in
                                     TurnBlockView(
                                         turn: turn,
                                         checkpointMode: checkpointMode,
@@ -112,7 +112,7 @@ struct SessionHistoryView: View {
                                         isCurrentMatch: currentMatchTurnIndex == turn.index,
                                         isCmdHeld: isCmdHeld
                                     )
-                                    .id(turn.index)
+                                    .id(turn.lineNumber)
                                     .overlay {
                                         if checkpointMode {
                                             Color.clear
@@ -395,17 +395,18 @@ struct SessionHistoryView: View {
         guard !searchMatchIndices.isEmpty,
               currentMatchPosition < searchMatchIndices.count else { return }
         let idx = searchMatchIndices[currentMatchPosition]
-        guard turns.contains(where: { $0.index == idx }) else { return }
+        guard let turn = turns.first(where: { $0.index == idx }) else { return }
+        let lineNum = turn.lineNumber
         if delay {
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(80))
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    proxy.scrollTo(idx, anchor: .center)
+                    proxy.scrollTo(lineNum, anchor: .center)
                 }
             }
         } else {
             withAnimation(.easeInOut(duration: 0.2)) {
-                proxy.scrollTo(idx, anchor: .center)
+                proxy.scrollTo(lineNum, anchor: .center)
             }
         }
     }

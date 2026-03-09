@@ -1512,8 +1512,18 @@ struct CardDetailView: View {
         let loadCount = max(Self.pageSize, turns.count)
         do {
             let result = try await TranscriptReader.readTail(from: path, maxTurns: loadCount)
-            turns = result.turns
-            hasMoreTurns = result.hasMore
+            if turns.isEmpty {
+                // Initial load — use the full result
+                turns = result.turns
+                hasMoreTurns = result.hasMore
+            } else {
+                // Live reload — only append new turns so existing views stay stable
+                let lastLineNumber = turns.last?.lineNumber ?? 0
+                let newTurns = result.turns.filter { $0.lineNumber > lastLineNumber }
+                if !newTurns.isEmpty {
+                    turns.append(contentsOf: newTurns)
+                }
+            }
         } catch {
             // Silently fail — empty history is fine
         }
